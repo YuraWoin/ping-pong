@@ -41,7 +41,7 @@ def receive():
 font_win = font.Font(None, 72)
 font_main = font.Font(None, 36)
 # --- ЗОБРАЖЕННЯ ----
-
+bg = image.load("background.png").convert()
 # --- ЗВУКИ ---
 
 # --- ГРА ---
@@ -54,6 +54,8 @@ while True:
     for e in event.get():
         if e.type == QUIT:
             exit()
+
+    screen.blit(bg, (0, 0))
 
     if "countdown" in game_state and game_state["countdown"] > 0:
         screen.fill((0, 0, 0))
