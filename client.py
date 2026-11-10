@@ -106,12 +106,19 @@ while True:
         screen.fill((30, 30, 30))
         draw.rect(screen, (0, 255, 0), (20, game_state['paddles']['0'], 20, 100))
         draw.rect(screen, (255, 0, 255), (WIDTH - 40, game_state['paddles']['1'], 20, 100))
-        draw.circle(screen, (255, 255, 255), (game_state['ball']['x'], game_state['ball']['y']), 10)
         score_text = font_main.render(f"{game_state['scores'][0]} : {game_state['scores'][1]}", True, (255, 255, 255))
         screen.blit(score_text, (WIDTH // 2 -25, 20))
-        for i, pos in enumerate(ball_trail):
+        for i, pos in enumerate(ball_trail): #!!! [(100, 100), (120, 120)]
+                    #!! i - номери кортежів, в яких знаходяться координати, i = 1
+                    #!! RGBA - A - 100 %
+                    #!! pos - перебирає самі кортежі з координатами, pos = (120, 120)
+            alpha = int((i / len(ball_trail)) * 255) #!!!!!!!!!!!! 0 128
             radius = int(3 + (i / len(ball_trail)) * 7)
-            draw.circle(screen, (255, 255, 255), pos, radius)
+            trail_surface = Surface((30, 30), SRCALPHA)#!!!!!!!!!!!!
+            draw.circle(trail_surface, (0, 150, 255, alpha), (15, 15), radius)#!!!!!!!!!!!!
+            screen.blit(trail_surface, (pos[0] - 15, pos[1] - 15))#!!!!!!!!!!!!
+
+        draw.circle(screen, (255, 255, 255), (ball_x, ball_y), 10) #!!!!!!!!!
 
         if game_state['sound_event']:
             if game_state['sound_event'] == 'wall_hit':
