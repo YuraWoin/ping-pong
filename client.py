@@ -40,8 +40,13 @@ def receive():
 # --- ШРИФТИ ---
 font_win = font.Font(None, 72)
 font_main = font.Font(None, 36)
+
+# --- ball animation ---
+ball_trail = []
+
+
 # --- ЗОБРАЖЕННЯ ----
-bg = image.load("background.png").convert()
+bg = image.load("bg.jpg").convert()
 # --- ЗВУКИ ---
 
 # --- ГРА ---
@@ -55,7 +60,7 @@ while True:
         if e.type == QUIT:
             exit()
 
-    screen.blit(bg, (0, 0))
+
 
     if "countdown" in game_state and game_state["countdown"] > 0:
         screen.fill((0, 0, 0))
@@ -90,12 +95,23 @@ while True:
         continue  # Блокує гру після перемоги
 
     if game_state:
+        ball_x = game_state['ball']['x']
+        ball_y = game_state['ball']['y']
+        ball_trail.append((ball_x, ball_y))
+        if len(ball_trail) > 10:
+            ball_trail.pop(0)
+
+
+        screen.blit(bg, (0, 0))
         screen.fill((30, 30, 30))
         draw.rect(screen, (0, 255, 0), (20, game_state['paddles']['0'], 20, 100))
         draw.rect(screen, (255, 0, 255), (WIDTH - 40, game_state['paddles']['1'], 20, 100))
         draw.circle(screen, (255, 255, 255), (game_state['ball']['x'], game_state['ball']['y']), 10)
         score_text = font_main.render(f"{game_state['scores'][0]} : {game_state['scores'][1]}", True, (255, 255, 255))
         screen.blit(score_text, (WIDTH // 2 -25, 20))
+        for i, pos in enumerate(ball_trail):
+            radius = int(3 + (i / len(ball_trail)) * 7)
+            draw.circle(screen, (255, 255, 255), pos, radius)
 
         if game_state['sound_event']:
             if game_state['sound_event'] == 'wall_hit':
