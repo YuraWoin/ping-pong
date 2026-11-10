@@ -6,6 +6,7 @@ from threading import Thread
 # ---ПУГАМЕ НАЛАШТУВАННЯ ---
 WIDTH, HEIGHT = 800, 600
 init()
+mixer.init()
 screen = display.set_mode((WIDTH, HEIGHT))
 clock = time.Clock()
 display.set_caption("Пінг-Понг")
@@ -41,6 +42,9 @@ def receive():
 font_win = font.Font(None, 72)
 font_main = font.Font(None, 36)
 
+font_score = font.Font(None, 56)
+font_small = font.Font(None, 20)
+
 # --- ball animation ---
 ball_trail = []
 
@@ -48,11 +52,17 @@ ball_trail = []
 # --- ЗОБРАЖЕННЯ ----
 bg = image.load("bg.jpg").convert()
 # --- ЗВУКИ ---
+wall_sound = mixer.Sound("1.mp3")
+platform_sound = mixer.Sound("2.mp3")
+
 
 # --- ГРА ---
 game_over = False
 winner = None
 you_winner = None
+
+switlashke = 0
+
 my_id, game_state, buffer, client = connect_to_server()
 Thread(target=receive, daemon=True).start()
 while True:
@@ -97,6 +107,10 @@ while True:
     if game_state:
         ball_x = game_state['ball']['x']
         ball_y = game_state['ball']['y']
+
+        if game_state['sound_event'] == "platform_hit":
+            switlashke = 10
+
         ball_trail.append((ball_x, ball_y))
         if len(ball_trail) > 10:
             ball_trail.pop(0)
@@ -104,14 +118,27 @@ while True:
 
         screen.blit(bg, (0, 0))
         screen.fill((30, 30, 30))
-        draw.rect(screen, (0, 255, 0), (20, game_state['paddles']['0'], 20, 100))
-        draw.rect(screen, (255, 0, 255), (WIDTH - 40, game_state['paddles']['1'], 20, 100))
-        score_text = font_main.render(f"{game_state['scores'][0]} : {game_state['scores'][1]}", True, (255, 255, 255))
-        screen.blit(score_text, (WIDTH // 2 -25, 20))
-        for i, pos in enumerate(ball_trail): #!!! [(100, 100), (120, 120)]
-                    #!! i - номери кортежів, в яких знаходяться координати, i = 1
-                    #!! RGBA - A - 100 %
-                    #!! pos - перебирає самі кортежі з координатами, pos = (120, 120)
+        # draw.rect(screen, (0, 255, 0), (20, game_state['paddles']['0'], 20, 100))
+        # draw.rect(screen, (255, 0, 255), (WIDTH - 40, game_state['paddles']['1'], 20, 100))
+        score_text = font_score.render(f"{game_state['scores'][0]} : {game_state['scores'][1]}", True, (255, 255, 255))
+        score_rect = score_text.get_rect(center=(WIDTH // 2, 20))
+        screen.blit(score_text, score_rect)
+
+        if switlashke > 0:
+            switlashke_color0 = (0, 150, 255)
+            switlashke_color1 = (0, 255, 199)
+            switlashke -= 1
+        else:
+            switlashke_color0 = (0, 150, 255)
+            switlashke_color1 = (0, 255, 199)
+
+        draw.rect(screen, switlashke_color0, (20, game_state['paddles']['0'], 20, 100))
+        draw.rect(screen, switlashke_color1, (WIDTH - 40, game_state['paddles']['1'], 20, 100))
+
+        for i, pos in enumerate(ball_trail):
+            #!! i - номери кортежів, в яких знаходяться координати, i = 1
+            #!! RGBA - A - 100 %
+            #!! pos - перебирає самі кортежі з координатами, pos = (120, 120)
             alpha = int((i / len(ball_trail)) * 255) #!!!!!!!!!!!! 0 128
             radius = int(3 + (i / len(ball_trail)) * 7)
             trail_surface = Surface((30, 30), SRCALPHA)#!!!!!!!!!!!!
@@ -123,10 +150,10 @@ while True:
         if game_state['sound_event']:
             if game_state['sound_event'] == 'wall_hit':
                 # звук відбиття м'ячика від стін
-                pass
+                wall_sound.play()
             if game_state['sound_event'] == 'platform_hit':
                 # звук відбиття м'ячика від платформи
-                pass
+                platform_sound.play()
 
     else:
         wating_text = font_main.render(f"Очікування гравців...", True, (255, 255, 255))
