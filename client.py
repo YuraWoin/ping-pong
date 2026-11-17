@@ -41,23 +41,34 @@ def receive():
 font_win = font.Font(None, 72)
 font_main = font.Font(None, 36)
 # --- ЗОБРАЖЕННЯ ----
-bg = image.load("background.png").convert()
+bg = image.load("bg.jpg").convert()
 # --- ЗВУКИ ---
 
 # --- ГРА ---
 game_over = False
 winner = None
 you_winner = None
+
+restart_sent = False
+
 my_id, game_state, buffer, client = connect_to_server()
 Thread(target=receive, daemon=True).start()
 while True:
     for e in event.get():
         if e.type == QUIT:
             exit()
+        if e.type == KEYDOWN and e.key == K_ESCAPE:
+            if e.key == K_K:
+                if "winner" and game_state["winner"] is not None and not restart_sent:
+                    client.sendall(b"RESTART")
+                    restart_sent = True
 
     screen.blit(bg, (0, 0))
 
     if "countdown" in game_state and game_state["countdown"] > 0:
+        you_winner = None
+        restart_sent = False
+        ball_trail.clear()
         screen.fill((0, 0, 0))
         countdown_text = font.Font(None, 72).render(str(game_state["countdown"]), True, (255, 255, 255))
         screen.blit(countdown_text, (WIDTH // 2 - 20, HEIGHT // 2 - 30))
@@ -82,7 +93,18 @@ while True:
         text_rect = win_text.get_rect(center=(WIDTH // 2, HEIGHT // 2))
         screen.blit(win_text, text_rect)
 
-        text = font_win.render('К - рестарт', True, (255, 215, 0))
+        if not restart_sent:
+            text = font_win.render('К - рестарт', True, (255, 215, 0))
+        else:
+            request = game_state.get('restart_request', 0)
+            if request < 2:
+                message = "Очікуємо 2 гравця..."
+            else:
+                message = "Починаємо нову гру"
+            text = font_main.render(message, True, (255, 215, 0))
+            ready_text = font_small.render(f"Готові гравці: {request} / 2", True, (255, 0, 0))
+            ready_rect = ready_text.get_rect(center=(WIDTH // 2, HEIGHT // 2 + 200))
+            screen.blit(ready_text, ready_rect)
         text_rect = text.get_rect(center=(WIDTH // 2, HEIGHT // 2 + 120))
         screen.blit(text, text_rect)
 
